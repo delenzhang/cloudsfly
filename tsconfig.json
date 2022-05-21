@@ -16,6 +16,6 @@
     "noEmit": true,
     "jsx": "react-jsx"
   },
-  "include": ["src", "public/lib"],
+  "include": ["src", "public/cloudsfly_lib"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

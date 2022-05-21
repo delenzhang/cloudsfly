@@ -1,7 +1,7 @@
 
 // const Cesium: any = window.Cesium;
 // import * as Cesium from 'cesium'
-window.CESIUM_BASE_URL = '/lib/Cesium/';
+window.CESIUM_BASE_URL = '/cloudsfly-lib/Cesium/';
 import * as Cesium from 'cesium';
 import { IPlaceObj } from '../../types'
 import MouseControl from './mouseControl'
@@ -187,7 +187,7 @@ async function startFly(startPoint: IPlaceObj, endPoint: IPlaceObj) {
     availability: new Cesium.TimeIntervalCollection([ new Cesium.TimeInterval({ start: start, stop: stop }) ]),
     position: positionProperty,
     // Attach the 3D model instead of the green point.
-    model: { uri: '/lib/asserts/Cesium_Air.glb', minimumPixelSize: 80, },
+    model: { uri: '/cloudsfly-lib/asserts/Cesium_Air.glb', minimumPixelSize: 80, },
     // Automatically compute the orientation from the position.
     orientation: new Cesium.VelocityOrientationProperty(positionProperty),    
     path: new Cesium.PathGraphics({ width: 0.1 }),
