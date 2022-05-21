@@ -4,6 +4,8 @@
 window.CESIUM_BASE_URL = '/cloudsfly-lib/Cesium/';
 import * as Cesium from 'cesium';
 import { IPlaceObj } from '../../types'
+import CONFIG from './Config'
+import PlaneControl from './planeControl';
 import MouseControl from './mouseControl'
 import "cesium/Build/Cesium/Widgets/widgets.css";
 Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJmYzdiNzI3Mi00YzhlLTQwYTQtOTE5OC05ZGVhOGI2MzQ0YjYiLCJpZCI6ODk2NTEsImlhdCI6MTY0OTg1MTg0OX0.5R9y9U5ex05rcqDcgRS73d-QTmSHCKhSOvh1p_pOZ1M';
@@ -12,22 +14,7 @@ const extent = Cesium.Rectangle.fromDegrees(113.31, 23.1,113.32, 23.2);
 Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
 
 let viewer: any
-const CONFIG = {
-   flyPointLength: 400,
-   viewerHeight: 2000,
-   timeStepInSeconds: 600,
-   points: {
-     'gz': {
-       label: '广州',
-       gs84: [23.077832,113.30779]
-     },
-     'sh': {
-      label: '上海',
-      gs84: [31.239729,121.49967],
-     }
-   } as Record<string, IPlaceObj>,
-  godViewerHeight: 1000 * 200000
-}
+
 
 async function viewerFlyToDegree(place: IPlaceObj, height = CONFIG.viewerHeight, duration = 5) {
   Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
@@ -103,20 +90,22 @@ export function initCesium() {
     })
     // tengxunmap3 = viewer.imageryLayers.addImageryProvider(base3)
   // GS84
-  viewer.camera.setView({
-    destination : Cesium.Cartesian3.fromDegrees(
-      CONFIG.points['gz'].gs84[1],
-      CONFIG.points['gz'].gs84[0],
-      CONFIG.godViewerHeight
-    )
-});
-const flyToTime = 8
-const holdViewTime = 3
+  // viewer.camera.setView({
+  //   destination : Cesium.Cartesian3.fromDegrees(
+  //     CONFIG.points['gz'].gs84[1],
+  //     CONFIG.points['gz'].gs84[0],
+  //     CONFIG.godViewerHeight
+  //   )});
+  initPlane(CONFIG.points['gz']);
+  return
+const flyToTime = 8 / 2
+const holdViewTime = 3 / 2
 setTimeout(() => {
   viewerFlyToDegree(CONFIG.points['gz'], CONFIG.viewerHeight, flyToTime).then((r2) => {
     console.log('>>>>>>> ', 3, r2)
     setTimeout(() => {
-      startFly(CONFIG.points['gz'], CONFIG.points['sh'])
+      // startFly(CONFIG.points['gz'], CONFIG.points['sh'])
+      initPlane(CONFIG.points['gz']);
       // const eventControl = new MouseControl()
       // eventControl.init()
     }, flyToTime * 1000)
@@ -195,4 +184,10 @@ async function startFly(startPoint: IPlaceObj, endPoint: IPlaceObj) {
   });
   
   viewer.trackedEntity = airplaneEntity;
+}
+
+
+function initPlane(startPoint: IPlaceObj) {
+   const planeControl = new PlaneControl(viewer);
+   planeControl.init(startPoint) 
 }
