@@ -14,7 +14,7 @@ Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
 let viewer: any
 const CONFIG = {
    flyPointLength: 400,
-   viewerHeight: 1000,
+   viewerHeight: 2000,
    timeStepInSeconds: 600,
    points: {
      'gz': {
@@ -117,8 +117,8 @@ setTimeout(() => {
     console.log('>>>>>>> ', 3, r2)
     setTimeout(() => {
       startFly(CONFIG.points['gz'], CONFIG.points['sh'])
-      const eventControl = new MouseControl()
-      eventControl.init()
+      // const eventControl = new MouseControl()
+      // eventControl.init()
     }, flyToTime * 1000)
   })
 }, holdViewTime * 1000)
@@ -178,7 +178,7 @@ async function startFly(startPoint: IPlaceObj, endPoint: IPlaceObj) {
     viewer.entities.add({
       description: `Location: (${dataPoint.longitude}, ${dataPoint.latitude}, ${dataPoint.height})`,
       position: position,
-      point: { pixelSize: 10, color: Cesium.Color.RED }
+      point: { pixelSize: 10, color: Cesium.Color.GREEN }
     });
   }
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import logo from './logo.svg'
 import './App.css'
-import Index from './pages/index/index.tsx'
+import Index from './pages/index/index'
 
 function App() {
   const [count, setCount] = useState(0)
