@@ -10,7 +10,7 @@ export default class PlaneControl {
   hpRoll: any
   dom: any
   chatClient: any
-  speed = 5
+  speed = 8
   roomId = 21788920
   modelUrl = '/cloudsfly-lib/asserts/Cesium_Air.glb'
   messages = [] as any
@@ -20,6 +20,12 @@ export default class PlaneControl {
   timer: any;
   fps = 10;
   isGodView =  true;
+  flag = {
+    moveUp: false,
+    moveDown: false,
+    moveLeft: false,
+    moveRight: false
+  } as any
   constructor(viewer: any) {
     this.viewer = viewer
     this.chatClient = new ChatClientRelay(this.roomId, this.config.autoTranslate)
@@ -164,7 +170,7 @@ export default class PlaneControl {
       self.position = Cesium.Matrix4.multiplyByPoint(modelMatrix, speedVector, self.position);
     }
   }
-  init(startPoint: IPlaceObj) {
+  init(startPoint: IPlaceObj, callback: Function) {
     const viewer = this.viewer
     var scene = viewer.scene;
     // 旋转角度
@@ -188,15 +194,11 @@ export default class PlaneControl {
     }));
 
     // 状态标志
-    let flag = {
-      moveUp: false,
-      moveDown: false,
-      moveLeft: false,
-      moveRight: false
-    };
+    const that = this
 
     // 根据键盘按键返回标志
     function setFlagStatus(key:any, value: any) {
+      let flag = that.flag
       switch (key.keyCode) {
         case 37:
           // 左
@@ -226,6 +228,7 @@ export default class PlaneControl {
     });
     var count = 0;
     viewer.clock.onTick.addEventListener(() => {
+      const flag = that.flag
       if (flag.moveUp) {
         console.log('delen >>>', flag.moveUp)
         position.z += 10
@@ -268,9 +271,12 @@ export default class PlaneControl {
         that.handleMessage(that.curMessage)
       } else {
         that.curMessage = that.messages.shift()
+        if (that.curMessage) {
+          callback && callback(that.curMessage)
+        }
       }
     });
-    const that = this
+    
     // 移动
     function moveCar(isUP: number) {
       // 计算速度矩阵
@@ -295,7 +301,7 @@ export default class PlaneControl {
       //var h2 = viewer.scene.sampleHeight(toH)
       // 更新相机位置（第一视角）
       // 上帝模式
-      console.log('delen >>> that.isGodView', that.isGodView, that.messages, that.curMessage)
+      // console.log('delen >>> that.isGodView', that.isGodView, that.messages, that.curMessage)
       if (that.isGodView) {
         viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 200))
       } else {
@@ -331,15 +337,30 @@ privilegeType: 0
 timestamp: 1653220745
 translation: ""
    */
-  small
+  microControlList = [] as any
+  leftWord = '左'
+  rightWord = '右'
   handleMessage(msgInfo: IDanMuMsgInfo) {
       if (msgInfo.content.includes('上帝')) {
         this.isGodView = true
       } else if (msgInfo.content.includes('驾驶')) {
         this.isGodView = false
+      } else if(msgInfo.content.includes(this.leftWord))  {
+        Object.keys(this.flag).forEach(key => {
+          this.flag[key] = false
+        })
+         this.flag[CONFIG.controlTextMap[this.leftWord]] = true
+      } else if (msgInfo.content.includes(this.rightWord)) {
+        Object.keys(this.flag).forEach(key => {
+          this.flag[key] = false
+        })
+         this.flag[CONFIG.controlTextMap[this.rightWord]] = true
+      } else {
+        Object.keys(this.flag).forEach(key => {
+          this.flag[key] = false
+        })
       }
+      this.lastMessage = this.curMessage
       this.curMessage = null
-
-
   }
 }

@@ -6,6 +6,42 @@
     <!-- <link rel="stylesheet" href="/lib/Cesium/widgets.css"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite App</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      #cesiumContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow: hidden;
+      }
+      #board_wrapper {
+        position: absolute;
+        left: 50%;
+        transform: translate(-50%, 240px);
+        background-color: rgba(0, 0, 0, 0.2);
+        height: 60px;
+        color: #fff;
+        font-size: 36px;
+        display: flex;
+        align-items: center;
+        padding: 8px 10px;
+      }
+      #board_wrapper .name {
+        color: red;
+        margin-right: 12px;
+      }
+      #board_wrapper img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        margin-right: 12px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react'
+import { IDanMuMsgInfo } from '../../types'
 import {initCesium} from './init'
-
+const initData : IDanMuMsgInfo = {} as IDanMuMsgInfo
 function App() {
-  const [count, setCount] = useState(0)
+  const [data , setData] = useState(initData)
   useEffect(() => {
-    initCesium()
+    initCesium((msg: IDanMuMsgInfo) => {
+      console.log('delen >>> view msg', msg)
+      setData(msg)
+    })
   }, [])
+  const avatarUrl = data.avatarUrl ? `${data.avatarUrl.replace('//i1.hdslb.com/', `/`)}` : null
+  const authorName = data.authorName ? data.authorName : '系统'
   return (
     <>
       <div id="cesiumContainer"></div>
-      <div id="ThreeContainer"></div>
+      <div id="board_wrapper">
+          {
+            avatarUrl ? <img src={avatarUrl} alt="" /> : null
+          }
+          
+          <span className='name'>{authorName}</span> 正在驾驶
+      </div>
     </>
     
   )

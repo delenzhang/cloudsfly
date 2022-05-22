@@ -1,7 +1,7 @@
 import { IPlaceObj } from '../../types'
 const CONFIG = {
   flyPointLength: 400,
-  viewerHeight: 2000,
+  viewerHeight: 1000,
   timeStepInSeconds: 600,
   points: {
     'gz': {
@@ -13,6 +13,10 @@ const CONFIG = {
      gs84: [31.239729,121.49967],
     }
   } as Record<string, IPlaceObj>,
- godViewerHeight: 1000 * 200000
+ godViewerHeight: 1000 * 200000,
+ controlTextMap: {
+   '左': 'moveLeft',
+   '右': 'moveRight'
+ } as any
 }
 export default CONFIG;
