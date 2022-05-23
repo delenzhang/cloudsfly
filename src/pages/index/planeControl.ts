@@ -10,7 +10,7 @@ export default class PlaneControl {
   hpRoll: any
   dom: any
   chatClient: any
-  speed = 8
+  speed = 16
   roomId = 21788920
   modelUrl = '/cloudsfly-lib/asserts/Cesium_Air.glb'
   messages = [] as any
@@ -18,7 +18,7 @@ export default class PlaneControl {
     autoTranslate: false
   }
   timer: any;
-  fps = 10;
+  fps = 24;
   isGodView =  true;
   flag = {
     moveUp: false,
@@ -175,7 +175,7 @@ export default class PlaneControl {
     var scene = viewer.scene;
     // 旋转角度
     let radian = Cesium.Math.toRadians(3.0);
-    let rotateRadian = Cesium.Math.toRadians(0.2);
+    let rotateRadian = Cesium.Math.toRadians(0.5);
   
 
     // 速度矢量
@@ -227,7 +227,15 @@ export default class PlaneControl {
       setFlagStatus(e, false);
     });
     var count = 0;
+    let lastTime = +new Date()
     viewer.clock.onTick.addEventListener(() => {
+      const now = new Date().getTime()
+      const delta = now - lastTime
+      if (delta > (1000 / this.fps)) {
+        lastTime = now
+      } else {
+        return
+      }
       const flag = that.flag
       if (flag.moveUp) {
         console.log('delen >>>', flag.moveUp)
@@ -290,11 +298,7 @@ export default class PlaneControl {
       // 模型移动
       Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, fixedFrameTransforms, modelPrimitive.modelMatrix);
 
-      var cartesian3 = new Cesium.Cartesian3(position.x, position.y, position.z);
-      var cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
-      var lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 + count) * 2 * Math.PI / 360);
-      var lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 + count) * 2 * Math.PI / 360);
-      var alt = cartographic.height + 10;
+      
       // 获取指定经纬度的高程
       //这部分是想要获取高程来实现贴地，目前这一块还没完善，有需求的可以借鉴一下
       //var toH=new Cesium.Cartographic.fromDegrees(lng,lat)
@@ -305,6 +309,11 @@ export default class PlaneControl {
       if (that.isGodView) {
         viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 200))
       } else {
+        let cartesian3 = new Cesium.Cartesian3(position.x, position.y, position.z);
+        let cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
+        let lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 + count) * 2 * Math.PI / 360);
+        let lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 + count) * 2 * Math.PI / 360);
+        let alt = cartographic.height + 10;
         viewer.camera.setView({
             destination: Cesium.Cartesian3.fromDegrees(lng, lat, alt),
             orientation: {
@@ -341,9 +350,9 @@ translation: ""
   leftWord = '左'
   rightWord = '右'
   handleMessage(msgInfo: IDanMuMsgInfo) {
-      if (msgInfo.content.includes('上帝')) {
+      if (msgInfo.content.includes('上帝模式')) {
         this.isGodView = true
-      } else if (msgInfo.content.includes('驾驶')) {
+      } else if (msgInfo.content.includes('第一视角')) {
         this.isGodView = false
       } else if(msgInfo.content.includes(this.leftWord))  {
         Object.keys(this.flag).forEach(key => {

@@ -17,10 +17,12 @@ function App() {
       <div id="cesiumContainer"></div>
       <div id="board_wrapper">
           {
-            avatarUrl ? <img src={avatarUrl} alt="" /> : null
+            // avatarUrl ? <img src={avatarUrl} alt="" /> : null
+          }
+          {
+           data.content ? <><span className='name'>{authorName}</span> 说： {data.content}</> : null 
           }
           
-          <span className='name'>{authorName}</span> 正在驾驶
       </div>
     </>
     
