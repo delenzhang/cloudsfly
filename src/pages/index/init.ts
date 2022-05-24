@@ -81,7 +81,29 @@ export function initCesium(callback: Function) {
     let base2 = new Cesium.UrlTemplateImageryProvider({
       url:
         'https://rt3.map.gtimg.com/tile?z={z}&x={x}&y={reverseY}&styleid=2&version=859'
+
     })
+    // 高德影像
+    // var imgLayer = new Cesium.UrlTemplateImageryProvider({
+
+    //   url: "https://webst02.is.autonavi.com/appmaptile?style=6&x={x}&y={y}&z={z}",
+      
+    //   minimumLevel: 3,
+      
+    //   maximumLevel: 18
+      
+    //   })
+      
+    //   viewer.imageryLayers.addImageryProvider(imgLayer);
+    // let base2 = new Cesium.UrlTemplateImageryProvider({
+
+    //   url: "http://webst02.is.autonavi.com/appmaptile?x={x}&y={y}&z={z}&lang=zh_cn&size=1&scale=1&style=8",
+      
+    //   minimumLevel: 3,
+      
+    //   maximumLevel: 18
+      
+    //   })
   
     const tengxunmap2 = viewer.imageryLayers.addImageryProvider(base2)
     // let base3 = new Cesium.UrlTemplateImageryProvider({

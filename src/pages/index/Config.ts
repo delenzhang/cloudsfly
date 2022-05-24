@@ -1,7 +1,7 @@
 import { IPlaceObj } from '../../types'
 const CONFIG = {
   flyPointLength: 400,
-  viewerHeight: 4000,
+  viewerHeight: 8000,
   timeStepInSeconds: 600,
   points: {
     'gz': {

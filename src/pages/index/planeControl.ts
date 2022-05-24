@@ -93,7 +93,7 @@ export default class PlaneControl {
     
     const hpRoll = new Cesium.HeadingPitchRoll();
     const hpRange = new Cesium.HeadingPitchRange();
-    const deltaRadians = Cesium.Math.toRadians(10.0);
+    const deltaRadians = Cesium.Math.toRadians(1.0);
     
     let position = Cesium.Cartesian3.fromDegrees(
       startPoint.gs84[1],
@@ -313,7 +313,7 @@ export default class PlaneControl {
               center
             );
             hpRange.heading = hpRoll.heading;
-            hpRange.pitch = hpRoll.pitch + Cesium.Math.toRadians(-30.0);
+            hpRange.pitch = hpRoll.pitch + Cesium.Math.toRadians(-40.0);
             camera.lookAt(center, hpRange);
           // viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 100))
         } else {
@@ -361,8 +361,9 @@ export default class PlaneControl {
   handleContent(content: string, txt: string, cb: Function) {
     const reg = new RegExp(`${txt}[^\\d]*(\\d+)`) as any
     if (reg.test(content)) {
-      let num = parseInt(reg.exec(content)[1]) as any
-      num = isNaN(num) || 1
+      const res = reg.exec(content)
+      let num = parseInt(res[1]) as any
+      num = isNaN(num) ? 1 : num
       for (let i = 0; i < num; i++) {
         setTimeout(() => {
           cb && cb()
