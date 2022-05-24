@@ -105,7 +105,7 @@ setTimeout(() => {
     console.log('>>>>>>> ', 3, r2)
     setTimeout(() => {
       // startFly(CONFIG.points['gz'], CONFIG.points['sh'])
-      initPlane(CONFIG.points['gz']);
+      // initPlane(CONFIG.points['gz']);
       // const eventControl = new MouseControl()
       // eventControl.init()
     }, flyToTime * 1000)

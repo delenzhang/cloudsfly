@@ -59,7 +59,21 @@ export default class ChatClientRelay {
       console.log('WebSocket error: ', event);
     });
   }
-
+/**
+ * fetch("ws://139.186.162.52/api/chat", {
+  "headers": {
+    "accept-language": "en,zh-CN;q=0.9,zh;q=0.8,en-US;q=0.7",
+    "cache-control": "no-cache",
+    "pragma": "no-cache",
+    "sec-websocket-extensions": "permessage-deflate; client_max_window_bits",
+    "sec-websocket-key": "HdMMp6iKPYXLThgfxZx2Gg==",
+    "sec-websocket-version": "13",
+    "cookie": "Hm_lvt_f2abfd5b32df11cbb5956d56bfe13b33=1652267854,1652948565,1653289400"
+  },
+  "body": null,
+  "method": "GET"
+});
+ */
   onWsOpen() {
     this.retryCount = 0
     this.websocket.send(JSON.stringify({

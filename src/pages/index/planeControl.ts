@@ -33,11 +33,10 @@ export default class PlaneControl {
   constructor(viewer: any) {
     this.viewer = viewer
     this.chatClient = new ChatClientRelay(this.roomId, this.config.autoTranslate)
-    this.onAddText = this.onAddText.bind(this)
     this.initSocket()
   }
   initSocket() {
-    this.chatClient.onAddText = this.onAddText
+    this.chatClient.onAddText = this.onAddText.bind(this)
     // this.chatClient.onAddGift = this.onAddGift
     // this.chatClient.onAddMember = this.onAddMember
     // this.chatClient.onAddSuperChat = this.onAddSuperChat
@@ -269,7 +268,7 @@ export default class PlaneControl {
     const rollSpan = document.getElementById("roll") as any;
     const speedSpan = document.getElementById("speed")as any;
     let lastTime = +new Date()
-    viewer.scene.preUpdate.addEventListener(function (scene, time) {
+    viewer.scene.preUpdate.addEventListener(function (scene: any, time: any) {
       const now = new Date().getTime()
       const delta = now - lastTime
       if (delta > (1000 / that.fps)) {
@@ -335,7 +334,7 @@ export default class PlaneControl {
       //   camera.lookAt(center, hpRange);
       // }
     });
-    viewer.scene.preRender.addEventListener(function (scene, time) {
+    viewer.scene.preRender.addEventListener(function (scene: any, time: any) {
       headingSpan.innerHTML = Cesium.Math.toDegrees(hpRoll.heading).toFixed(
         1
       );
