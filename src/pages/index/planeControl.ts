@@ -4,7 +4,7 @@ import { IPlaceObj, IDanMuMsgInfo } from '../../types'
 // import { io } from 'socket.io-client'
 import ChatClientRelay from './ChatClientRelay'
 // const socket = io(`ws://${location.host}/api`);
-const MINSPEED = 100
+const MINSPEED = 50
 const MAXSPEED = 400
 export default class PlaneControl {
   viewer: any
@@ -20,8 +20,8 @@ export default class PlaneControl {
     autoTranslate: false
   }
   timer: any;
-  fps = 24;
-  isGodView =  false;
+  fps = 18;
+  isGodView =  true;
   flag = {
     moveUp: false,
     moveDown: false,
@@ -33,16 +33,16 @@ export default class PlaneControl {
   constructor(viewer: any) {
     this.viewer = viewer
     this.chatClient = new ChatClientRelay(this.roomId, this.config.autoTranslate)
-    this.initSocket()
+    // this.initSocket()
   }
   initSocket() {
-    this.chatClient.onAddText = this.onAddText.bind(this)
+    
     // this.chatClient.onAddGift = this.onAddGift
     // this.chatClient.onAddMember = this.onAddMember
     // this.chatClient.onAddSuperChat = this.onAddSuperChat
     // this.chatClient.onDelSuperChat = this.onDelSuperChat
     // this.chatClient.onUpdateTranslation = this.onUpdateTranslation
-    this.chatClient.start()
+    
   }
   onAddText(data: any) {
     console.log('delen >>>', data);
@@ -93,7 +93,7 @@ export default class PlaneControl {
     
     const hpRoll = new Cesium.HeadingPitchRoll();
     const hpRange = new Cesium.HeadingPitchRange();
-    const deltaRadians = Cesium.Math.toRadians(3.0);
+    const deltaRadians = Cesium.Math.toRadians(10.0);
     
     let position = Cesium.Cartesian3.fromDegrees(
       startPoint.gs84[1],
@@ -140,6 +140,7 @@ export default class PlaneControl {
       hpRange.pitch = pitch;
       hpRange.range = r * 50.0;
       camera.lookAt(center, hpRange);
+      update();
     });
 
     function turnRight() {
@@ -190,13 +191,14 @@ export default class PlaneControl {
             that.speed = Math.max(--that.speed, MINSPEED);
           } else {
             // pitch down
+            console.log(121212)
             pitchDown()
           }
           break;
         case 38:
           if (e.shiftKey) {
             // speed up
-            that.speed = Math.min(++that.speed, MINSPEED);
+            that.speed = Math.min(++that.speed, MAXSPEED);
           } else {
             // pitch up
             pitchUp()
@@ -223,117 +225,128 @@ export default class PlaneControl {
       }
     });
 
-    
+    const leftRollText = '左旋'
+    const rightRollText = '右旋'
+    const rightText = '右'
+    const leftText = '左'
+    const upText = '上'
+    const downText = '下'
 
-    const handleMessage = () => {
-      if (!that.curMessage) {
-        that.curMessage = that.messages.shift()
-        if (that.curMessage) {
-          callback && callback(that.curMessage)
-        }
-      } else {
-        const msgInfo = that.curMessage as IDanMuMsgInfo 
+    this.chatClient.onAddText = (msgInfo: IDanMuMsgInfo) => {
         if (msgInfo.content.includes('上帝模式')) {
           this.isGodView = true
         } else if (msgInfo.content.includes('第一视角')) {
           this.isGodView = false
         } else if(msgInfo.content.includes("加速"))  {
-          that.speed = Math.min(that.speed+10, MINSPEED);
+          that.speed = Math.min(that.speed+10, MAXSPEED);
         } else if(msgInfo.content.includes("减速"))  {
           that.speed = Math.max(that.speed - 10, MINSPEED);
         } 
-        else if(msgInfo.content.includes("左转"))  {
-          rollLeft()
-        } else if(msgInfo.content.includes("右转"))  {
-          rollRight()
+        else if(msgInfo.content.includes(leftRollText))  {
+          this.handleContent(msgInfo.content, leftRollText, () => {
+            rollLeft()
+          })
+        } else if(msgInfo.content.includes(rightRollText))  {
+          this.handleContent(msgInfo.content, rightRollText, () => {
+            rollRight()
+          })
+        } else if(msgInfo.content.includes(leftText))  {
+          this.handleContent(msgInfo.content, leftText, () => {
+            turnLeft()
+          })
+          
+        } else if(msgInfo.content.includes(rightText))  {
+          this.handleContent(msgInfo.content, rightText, () => {
+            turnRight()
+          })
         }
-        else if(msgInfo.content.includes("左"))  {
-          turnLeft()
-        } else if(msgInfo.content.includes("右"))  {
-          turnRight
+        else if(msgInfo.content.includes(upText))  {
+          this.handleContent(msgInfo.content, upText, () => {
+            pitchUp()
+          })
+          
+        } else if(msgInfo.content.includes(downText))  {
+          this.handleContent(msgInfo.content, upText, () => {
+            pitchDown()
+          })
         }
-        else if(msgInfo.content.includes("上"))  {
-          pitchUp()
-        } else if(msgInfo.content.includes("下"))  {
-          pitchDown()
-        }
-        this.lastMessage = this.curMessage
-        this.curMessage = null
-      } 
-      
-  }
+        callback && callback(msgInfo)
+    }
+     this.chatClient.start()
     
     const headingSpan = document.getElementById("heading") as any;
     const pitchSpan = document.getElementById("pitch") as any;
     const rollSpan = document.getElementById("roll") as any;
     const speedSpan = document.getElementById("speed")as any;
     let lastTime = +new Date()
-    viewer.scene.preUpdate.addEventListener(function (scene: any, time: any) {
-      const now = new Date().getTime()
-      const delta = now - lastTime
-      if (delta > (1000 / that.fps)) {
-        lastTime = now
-      } else {
-        return
-      }
-      handleMessage()
-      speedVector = Cesium.Cartesian3.multiplyByScalar(
-        Cesium.Cartesian3.UNIT_X,
-        that.speed / 10,
-        speedVector
-      );
-      position = Cesium.Matrix4.multiplyByPoint(
-        planePrimitive.modelMatrix,
-        speedVector,
-        position
-      );
-      pathPosition.addSample(Cesium.JulianDate.now(), position);
-      Cesium.Transforms.headingPitchRollToFixedFrame(
-        position,
-        hpRoll,
-        Cesium.Ellipsoid.WGS84,
-        fixedFrameTransform,
-        planePrimitive.modelMatrix
-      );
-      if (that.isGodView) {
-          // Cesium.Matrix4.multiplyByPoint(
-          //   planePrimitive.modelMatrix,
-          //   planePrimitive.boundingSphere.center,
-          //   center
-          // );
-          // hpRange.heading = hpRoll.heading;
-          // hpRange.pitch = hpRoll.pitch;
-          // camera.lookAt(center, hpRange);
-        viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 200))
-      } else {
-        let cartesian3 = new Cesium.Cartesian3(position.x, position.y, position.z);
-        let cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
-        let lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 ) * 2 * Math.PI / 360);
-        let lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 ) * 2 * Math.PI / 360);
-        let alt = cartographic.height + 10;
-        viewer.camera.setView({
-            destination: Cesium.Cartesian3.fromDegrees(lng, lat, alt),
-            orientation: {
-              // 指向  镜头随小车变化角度
-              heading: hpRoll.heading,
-              // 视角固定
-              pitch: hpRoll.pitch ,
-              roll: hpRoll.roll
-            }
-          });
-      }
-      // if (fromBehind.checked) {
-      //   // Zoom to model
-      //   Cesium.Matrix4.multiplyByPoint(
-      //     planePrimitive.modelMatrix,
-      //     planePrimitive.boundingSphere.center,
-      //     center
-      //   );
-      //   hpRange.heading = hpRoll.heading;
-      //   hpRange.pitch = hpRoll.pitch;
-      //   camera.lookAt(center, hpRange);
-      // }
-    });
+    function update() {
+      viewer.scene.preUpdate.addEventListener(function (scene: any, time: any) {
+        const now = new Date().getTime()
+        const delta = now - lastTime
+        if (delta > (1000 / that.fps)) {
+          lastTime = now
+        } else {
+          return
+        }
+        speedVector = Cesium.Cartesian3.multiplyByScalar(
+          Cesium.Cartesian3.UNIT_X,
+          that.speed / 10,
+          speedVector
+        );
+        position = Cesium.Matrix4.multiplyByPoint(
+          planePrimitive.modelMatrix,
+          speedVector,
+          position
+        );
+        pathPosition.addSample(Cesium.JulianDate.now(), position);
+        Cesium.Transforms.headingPitchRollToFixedFrame(
+          position,
+          hpRoll,
+          Cesium.Ellipsoid.WGS84,
+          fixedFrameTransform,
+          planePrimitive.modelMatrix
+        );
+        if (that.isGodView) {
+            Cesium.Matrix4.multiplyByPoint(
+              planePrimitive.modelMatrix,
+              planePrimitive.boundingSphere.center,
+              center
+            );
+            hpRange.heading = hpRoll.heading;
+            hpRange.pitch = hpRoll.pitch + Cesium.Math.toRadians(-30.0);
+            camera.lookAt(center, hpRange);
+          // viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 100))
+        } else {
+          let cartesian3 = new Cesium.Cartesian3(position.x, position.y, position.z);
+          let cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
+          let lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 ) * 2 * Math.PI / 360);
+          let lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 ) * 2 * Math.PI / 360);
+          let alt = cartographic.height + 10;
+          viewer.camera.setView({
+              destination: Cesium.Cartesian3.fromDegrees(lng, lat, alt),
+              orientation: {
+                // 指向  镜头随小车变化角度
+                heading: hpRoll.heading,
+                // 视角固定
+                pitch: hpRoll.pitch ,
+                roll: hpRoll.roll
+              }
+            });
+        }
+        // if (fromBehind.checked) {
+        //   // Zoom to model
+        //   Cesium.Matrix4.multiplyByPoint(
+        //     planePrimitive.modelMatrix,
+        //     planePrimitive.boundingSphere.center,
+        //     center
+        //   );
+        //   hpRange.heading = hpRoll.heading;
+        //   hpRange.pitch = hpRoll.pitch;
+        //   camera.lookAt(center, hpRange);
+        // }
+      });
+    }
+    
     viewer.scene.preRender.addEventListener(function (scene: any, time: any) {
       headingSpan.innerHTML = Cesium.Math.toDegrees(hpRoll.heading).toFixed(
         1
@@ -343,6 +356,20 @@ export default class PlaneControl {
       speedSpan.innerHTML = that.speed.toFixed(1);
     });   
     
+  }
+
+  handleContent(content: string, txt: string, cb: Function) {
+    const reg = new RegExp(`${txt}[^\\d]*(\\d+)`) as any
+    if (reg.test(content)) {
+      let num = parseInt(reg.exec(content)[1]) as any
+      num = isNaN(num) || 1
+      for (let i = 0; i < num; i++) {
+        setTimeout(() => {
+          cb && cb()
+        }, 1000 / this.fps)
+      }
+      
+    }
   }
   curMessage = null;
   lastMessage = null;
