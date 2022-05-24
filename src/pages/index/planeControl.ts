@@ -4,13 +4,15 @@ import { IPlaceObj, IDanMuMsgInfo } from '../../types'
 // import { io } from 'socket.io-client'
 import ChatClientRelay from './ChatClientRelay'
 // const socket = io(`ws://${location.host}/api`);
+const MINSPEED = 100
+const MAXSPEED = 400
 export default class PlaneControl {
   viewer: any
   position: any
   hpRoll: any
   dom: any
   chatClient: any
-  speed = 16
+  speed = MINSPEED
   roomId = 21788920
   modelUrl = '/cloudsfly-lib/asserts/Cesium_Air.glb'
   messages = [] as any
@@ -19,12 +21,14 @@ export default class PlaneControl {
   }
   timer: any;
   fps = 24;
-  isGodView =  true;
+  isGodView =  false;
   flag = {
     moveUp: false,
     moveDown: false,
     moveLeft: false,
-    moveRight: false
+    moveRight: false,
+    turnLeft: false,
+    turnRight: false
   } as any
   constructor(viewer: any) {
     this.viewer = viewer
@@ -52,267 +56,261 @@ export default class PlaneControl {
   getOrientation() {
     return Cesium.Transforms.headingPitchRollQuaternion(this.position, this.hpRoll)
   }
-  // socketIo() {
-  //   // GOOD
-  //   socket.on("connect", () => {
-  //     const engine = socket.io.engine;
-  //     console.log('delen >>>  connect', engine.transport.name); // in most cases, prints "polling"
-
-  //   });
-  //   socket.on("data", (data) => {
-  //     console.log('delen >>> data ', data)
-  //   });
-  //   socket.on("message", (data) => {
-  //     console.log('delen >>> message ', data)
-  //   });
-  //   socket.on("myResponse", (data) => {
-  //     console.log('delen >>> myResponse ', data)
-  //   });
-  // }
-  init1(startPoint: IPlaceObj) {
-    let radian = Cesium.Math.toRadians(2.0);
-    let speedVector = new Cesium.Cartesian3();
-    const viewer = this.viewer
-    this.position = Cesium.Cartesian3.fromDegrees(startPoint.gs84[1], startPoint.gs84[0], CONFIG.viewerHeight)
-    this.hpRoll = new Cesium.HeadingPitchRoll();
-    // 添加模型
-    let airplaneEntity = viewer.entities.add({
-      id: 'plane',
-      position: new Cesium.CallbackProperty(this.getPosition, true),
-      // 根据所提供的速度计算点
-      // orientation: new Cesium.CallbackProperty(this.getOrientation, false),
-      model: { uri: '/cloudsfly-lib/asserts/Cesium_Air.glb', minimumPixelSize: 80, }
-    });
-    viewer.trackedEntity = airplaneEntity;
-    let flag = {
-      moveUp: false,
-      moveDown: false,
-      moveLeft: false,
-      moveRight: false
-    }
-    // 根据键盘按键返回标志
-    function setFlagStatus(key: any, value: boolean) {
-      switch (key.keyCode) {
-        case 37:
-          // 左
-          flag.moveLeft = value;
-          break;
-        case 38:
-          // 上
-          flag.moveUp = value;
-          break;
-        case 39:
-          // 右
-          flag.moveRight = value;
-          break;
-        case 40:
-          flag.moveDown = value;
-          // 下
-          break;
-      }
-    }
-    document.addEventListener('keydown', (e) => {
-      setFlagStatus(e, true);
-    });
-
-    document.addEventListener('keyup', (e) => {
-      setFlagStatus(e, false);
-    });
-    var count = 0;
-    viewer.clock.onTick.addEventListener(() => {
-      let hpRoll = this.hpRoll
-
-      moveCar(1);
-      if (flag.moveUp) {
-        if (flag.moveLeft) {
-          hpRoll.heading -= radian;
-          count += 2;
-        }
-        if (flag.moveRight) {
-          hpRoll.heading += radian;
-          count -= 2;
-        }
-      } else if (flag.moveDown) {
-        // if(flag.moveLeft){
-        //     hpRoll.heading -= radian;
-        //     count += 2;
-        // }
-        // if(flag.moveRight){
-        //     hpRoll.heading += radian;
-        //     count -= 2;
-        // }
-        // moveCar(-1);
-      } else {
-        if (flag.moveLeft) {
-          hpRoll.heading -= radian;
-          count += 2;
-        }
-        if (flag.moveRight) {
-          hpRoll.heading += radian;
-          count -= 2;
-        }
-      }
-    });
-    // 移动小车
-    const self = this
-    function moveCar(isUP: Number) {
-      // 计算速度矩阵
-      if (isUP > 0) {
-        speedVector = Cesium.Cartesian3.multiplyByScalar(Cesium.Cartesian3.UNIT_X, self.speed, speedVector);
-      } else if (isUP < 0) {
-        speedVector = Cesium.Cartesian3.multiplyByScalar(Cesium.Cartesian3.UNIT_X, -self.speed, speedVector);
-      } else {
-        speedVector = Cesium.Cartesian3.multiplyByScalar(Cesium.Cartesian3.UNIT_X, 0, speedVector);
-      }
-      // 根据速度计算出下一个位置的坐标
-      let fixedFrameTransforms = Cesium.Transforms.localFrameToFixedFrameGenerator('east', 'north');
-      let modelMatrix = Cesium.Transforms.headingPitchRollToFixedFrame(self.position, self.hpRoll, Cesium.Ellipsoid.WGS84, fixedFrameTransforms);
-      self.position = Cesium.Matrix4.multiplyByPoint(modelMatrix, speedVector, self.position);
-    }
-  }
+  
   init(startPoint: IPlaceObj, callback: Function) {
     const viewer = this.viewer
-    var scene = viewer.scene;
-    // 旋转角度
-    let radian = Cesium.Math.toRadians(3.0);
-    let rotateRadian = Cesium.Math.toRadians(0.5);
-  
-
-    // 速度矢量
-    let speedVector = new Cesium.Cartesian3();
-    // 起始位置
-    let position = Cesium.Cartesian3.fromDegrees(startPoint.gs84[1], startPoint.gs84[0], CONFIG.viewerHeight);
-
-    // 用于设置模型方向
-    let hpRoll = new Cesium.HeadingPitchRoll();
-    let fixedFrameTransforms = Cesium.Transforms.localFrameToFixedFrameGenerator('north', 'west');
-
-    let modelPrimitive = scene.primitives.add(Cesium.Model.fromGltf({
-      url: this.modelUrl,
-      modelMatrix: Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, fixedFrameTransforms),
-      minimumPixelSize: 128
-    }));
-
-    // 状态标志
+    const canvas = viewer.canvas;
     const that = this
+    canvas.setAttribute("tabindex", "0"); // needed to put focus on the canvas
+    canvas.addEventListener("click", function () {
+      canvas.focus();
+    });
+    canvas.focus();
+    
+    const scene = viewer.scene;
+    
+    const pathPosition = new Cesium.SampledPositionProperty();
+    const entityPath = viewer.entities.add({
+      position: pathPosition,
+      name: "path",
+      path: {
+        show: true,
+        leadTime: 0,
+        trailTime: 60,
+        width: 20,
+        resolution: 1,
+        material: new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.3,
+          taperPower: 0.3,
+          color: Cesium.Color.PALEGOLDENROD,
+        }),
+      },
+    });
+    
+    const camera = viewer.camera;
+    const controller = scene.screenSpaceCameraController;
+    let r = 0;
+    const center = new Cesium.Cartesian3();
+    
+    const hpRoll = new Cesium.HeadingPitchRoll();
+    const hpRange = new Cesium.HeadingPitchRange();
+    const deltaRadians = Cesium.Math.toRadians(3.0);
+    
+    let position = Cesium.Cartesian3.fromDegrees(
+      startPoint.gs84[1],
+      startPoint.gs84[0],
+      CONFIG.viewerHeight
+    );
+    let speedVector = new Cesium.Cartesian3();
+    const fixedFrameTransform = Cesium.Transforms.localFrameToFixedFrameGenerator(
+      "north",
+      "west"
+    );
+    
+    const planePrimitive = scene.primitives.add(
+      Cesium.Model.fromGltf({
+        url: '/cloudsfly-lib/asserts/Cesium_Air.glb',
+        modelMatrix: Cesium.Transforms.headingPitchRollToFixedFrame(
+          position,
+          hpRoll,
+          Cesium.Ellipsoid.WGS84,
+          fixedFrameTransform
+        ),
+        minimumPixelSize: 128,
+      })
+    );
+    
+    planePrimitive.readyPromise.then(function (model: any) {
+      // Play and loop all animations at half-speed
+      model.activeAnimations.addAll({
+        multiplier: 0.5,
+        loop: Cesium.ModelAnimationLoop.REPEAT,
+      });
+    
+      // Zoom to model
+      r = 2.0 * Math.max(model.boundingSphere.radius, camera.frustum.near);
+      controller.minimumZoomDistance = r * 0.5;
+      Cesium.Matrix4.multiplyByPoint(
+        model.modelMatrix,
+        model.boundingSphere.center,
+        center
+      );
+      const heading = Cesium.Math.toRadians(230.0);
+      const pitch = Cesium.Math.toRadians(-20.0);
+      hpRange.heading = heading;
+      hpRange.pitch = pitch;
+      hpRange.range = r * 50.0;
+      camera.lookAt(center, hpRange);
+    });
 
-    // 根据键盘按键返回标志
-    function setFlagStatus(key:any, value: any) {
-      let flag = that.flag
-      switch (key.keyCode) {
-        case 37:
-          // 左
-          flag.moveLeft = value;
-          break;
-        case 38:
-          // 上
-          flag.moveUp = value;
-          break;
-        case 39:
-          // 右
-          flag.moveRight = value;
-          break;
-        case 40:
-          flag.moveDown = value;
-          // 下
-          break;
+    function turnRight() {
+      hpRoll.heading += deltaRadians;
+      if (hpRoll.heading > Cesium.Math.TWO_PI) {
+        hpRoll.heading -= Cesium.Math.TWO_PI;
       }
     }
 
-    document.addEventListener('keydown', (e) => {
-      setFlagStatus(e, true);
+    function rollRight() {
+      // roll right
+      hpRoll.roll += deltaRadians;
+      if (hpRoll.roll > Cesium.Math.TWO_PI) {
+        hpRoll.roll -= Cesium.Math.TWO_PI;
+      }
+    }
+
+    function pitchDown() {
+      hpRoll.pitch -= deltaRadians;
+      if (hpRoll.pitch < -Cesium.Math.TWO_PI) {
+        hpRoll.pitch += Cesium.Math.TWO_PI;
+      }
+    }
+
+    function pitchUp() {
+      hpRoll.pitch += deltaRadians;
+      if (hpRoll.pitch > Cesium.Math.TWO_PI) {
+        hpRoll.pitch -= Cesium.Math.TWO_PI;
+      }
+    }
+    function rollLeft() {
+      hpRoll.roll -= deltaRadians;
+      if (hpRoll.roll < 0.0) {
+        hpRoll.roll += Cesium.Math.TWO_PI;
+      }
+    }
+    function turnLeft() {
+      hpRoll.heading -= deltaRadians;
+      if (hpRoll.heading < 0.0) {
+        hpRoll.heading += Cesium.Math.TWO_PI;
+      }
+    }     
+    document.addEventListener("keydown", function (e) {
+      switch (e.keyCode) {
+        case 40:
+          if (e.shiftKey) {
+            // speed down
+            that.speed = Math.max(--that.speed, MINSPEED);
+          } else {
+            // pitch down
+            pitchDown()
+          }
+          break;
+        case 38:
+          if (e.shiftKey) {
+            // speed up
+            that.speed = Math.min(++that.speed, MINSPEED);
+          } else {
+            // pitch up
+            pitchUp()
+          }
+          break;
+        case 39:
+          if (e.shiftKey) {
+            rollRight() 
+          } else {
+            // turn right
+            turnRight()
+          }
+          break;
+        case 37:
+          if (e.shiftKey) {
+            // roll left until
+            rollLeft()
+          } else {
+            // turn left
+            turnLeft() 
+          }
+          break;
+        default:
+      }
     });
 
-    document.addEventListener('keyup', (e) => {
-      setFlagStatus(e, false);
-    });
-    var count = 0;
-    let lastTime = +new Date()
-    viewer.clock.onTick.addEventListener(() => {
-      const now = new Date().getTime()
-      const delta = now - lastTime
-      if (delta > (1000 / this.fps)) {
-        lastTime = now
-      } else {
-        return
-      }
-      const flag = that.flag
-      if (flag.moveUp) {
-        console.log('delen >>>', flag.moveUp)
-        position.z += 10
-      } else if (flag.moveDown) {
-        // if(flag.moveLeft){
-        //     hpRoll.heading -= radian ;
-        //     count += 2;
-        // }
-        // if(flag.moveRight){
-        //     hpRoll.heading += radian;
-        //     count -= 2;
-        // }
-        // moveCar(-1);
-      }
-      if (flag.moveLeft) {
-        hpRoll.heading -= rotateRadian / 4;
+    
 
-        if (hpRoll.roll > Cesium.Math.toRadians(-45)) {
-          hpRoll.roll -= rotateRadian;
-        }
-        // count += 2;
-        // moveCar(0)
-      } else if (flag.moveRight) {
-        hpRoll.heading += rotateRadian / 4;
-        if (hpRoll.roll < Cesium.Math.toRadians(45)) {
-          hpRoll.roll += rotateRadian;
-        }
-        // count -= 2;
-        // moveCar(0)
-      } else {
-        if (hpRoll.roll > rotateRadian) {
-          hpRoll.roll -= rotateRadian
-        }
-        if (hpRoll.roll < -rotateRadian) {
-          hpRoll.roll += rotateRadian
-        }
-      }
-      moveCar(1)
-      if (that.curMessage) {
-        that.handleMessage(that.curMessage)
-      } else {
+    const handleMessage = () => {
+      if (!that.curMessage) {
         that.curMessage = that.messages.shift()
         if (that.curMessage) {
           callback && callback(that.curMessage)
         }
-      }
-    });
-    
-    // 移动
-    function moveCar(isUP: number) {
-      // 计算速度矩阵
-      if (isUP > 0) {
-        speedVector = Cesium.Cartesian3.multiplyByScalar(Cesium.Cartesian3.UNIT_X, that.speed, speedVector);
       } else {
-        speedVector = Cesium.Cartesian3.multiplyByScalar(Cesium.Cartesian3.UNIT_X, -that.speed, speedVector);
-      }
-      // 根据速度计算出下一个位置的坐标
-      position = Cesium.Matrix4.multiplyByPoint(modelPrimitive.modelMatrix, speedVector, position);
-      // 模型移动
-      Cesium.Transforms.headingPitchRollToFixedFrame(position, hpRoll, Cesium.Ellipsoid.WGS84, fixedFrameTransforms, modelPrimitive.modelMatrix);
-
+        const msgInfo = that.curMessage as IDanMuMsgInfo 
+        if (msgInfo.content.includes('上帝模式')) {
+          this.isGodView = true
+        } else if (msgInfo.content.includes('第一视角')) {
+          this.isGodView = false
+        } else if(msgInfo.content.includes("加速"))  {
+          that.speed = Math.min(that.speed+10, MINSPEED);
+        } else if(msgInfo.content.includes("减速"))  {
+          that.speed = Math.max(that.speed - 10, MINSPEED);
+        } 
+        else if(msgInfo.content.includes("左转"))  {
+          rollLeft()
+        } else if(msgInfo.content.includes("右转"))  {
+          rollRight()
+        }
+        else if(msgInfo.content.includes("左"))  {
+          turnLeft()
+        } else if(msgInfo.content.includes("右"))  {
+          turnRight
+        }
+        else if(msgInfo.content.includes("上"))  {
+          pitchUp()
+        } else if(msgInfo.content.includes("下"))  {
+          pitchDown()
+        }
+        this.lastMessage = this.curMessage
+        this.curMessage = null
+      } 
       
-      // 获取指定经纬度的高程
-      //这部分是想要获取高程来实现贴地，目前这一块还没完善，有需求的可以借鉴一下
-      //var toH=new Cesium.Cartographic.fromDegrees(lng,lat)
-      //var h2 = viewer.scene.sampleHeight(toH)
-      // 更新相机位置（第一视角）
-      // 上帝模式
-      // console.log('delen >>> that.isGodView', that.isGodView, that.messages, that.curMessage)
+  }
+    
+    const headingSpan = document.getElementById("heading") as any;
+    const pitchSpan = document.getElementById("pitch") as any;
+    const rollSpan = document.getElementById("roll") as any;
+    const speedSpan = document.getElementById("speed")as any;
+    let lastTime = +new Date()
+    viewer.scene.preUpdate.addEventListener(function (scene, time) {
+      const now = new Date().getTime()
+      const delta = now - lastTime
+      if (delta > (1000 / that.fps)) {
+        lastTime = now
+      } else {
+        return
+      }
+      handleMessage()
+      speedVector = Cesium.Cartesian3.multiplyByScalar(
+        Cesium.Cartesian3.UNIT_X,
+        that.speed / 10,
+        speedVector
+      );
+      position = Cesium.Matrix4.multiplyByPoint(
+        planePrimitive.modelMatrix,
+        speedVector,
+        position
+      );
+      pathPosition.addSample(Cesium.JulianDate.now(), position);
+      Cesium.Transforms.headingPitchRollToFixedFrame(
+        position,
+        hpRoll,
+        Cesium.Ellipsoid.WGS84,
+        fixedFrameTransform,
+        planePrimitive.modelMatrix
+      );
       if (that.isGodView) {
+          // Cesium.Matrix4.multiplyByPoint(
+          //   planePrimitive.modelMatrix,
+          //   planePrimitive.boundingSphere.center,
+          //   center
+          // );
+          // hpRange.heading = hpRoll.heading;
+          // hpRange.pitch = hpRoll.pitch;
+          // camera.lookAt(center, hpRange);
         viewer.camera.lookAt(position, new Cesium.HeadingPitchRange(hpRoll.heading, hpRoll.pitch + Cesium.Math.toRadians(-16.0), 200))
       } else {
         let cartesian3 = new Cesium.Cartesian3(position.x, position.y, position.z);
         let cartographic = scene.globe.ellipsoid.cartesianToCartographic(cartesian3);
-        let lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 + count) * 2 * Math.PI / 360);
-        let lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 + count) * 2 * Math.PI / 360);
+        let lng = Cesium.Math.toDegrees(cartographic.longitude) + 0.00001852398509 * 2 * Math.cos((270 ) * 2 * Math.PI / 360);
+        let lat = Cesium.Math.toDegrees(cartographic.latitude) + 0.00001852398509 * 2 * Math.sin((270 ) * 2 * Math.PI / 360);
         let alt = cartographic.height + 10;
         viewer.camera.setView({
             destination: Cesium.Cartesian3.fromDegrees(lng, lat, alt),
@@ -320,12 +318,32 @@ export default class PlaneControl {
               // 指向  镜头随小车变化角度
               heading: hpRoll.heading,
               // 视角固定
-              pitch: Cesium.Math.toRadians(-24.0),
-              roll: hpRoll.roll / 2
+              pitch: hpRoll.pitch ,
+              roll: hpRoll.roll
             }
           });
       }
-    }
+      // if (fromBehind.checked) {
+      //   // Zoom to model
+      //   Cesium.Matrix4.multiplyByPoint(
+      //     planePrimitive.modelMatrix,
+      //     planePrimitive.boundingSphere.center,
+      //     center
+      //   );
+      //   hpRange.heading = hpRoll.heading;
+      //   hpRange.pitch = hpRoll.pitch;
+      //   camera.lookAt(center, hpRange);
+      // }
+    });
+    viewer.scene.preRender.addEventListener(function (scene, time) {
+      headingSpan.innerHTML = Cesium.Math.toDegrees(hpRoll.heading).toFixed(
+        1
+      );
+      pitchSpan.innerHTML = Cesium.Math.toDegrees(hpRoll.pitch).toFixed(1);
+      rollSpan.innerHTML = Cesium.Math.toDegrees(hpRoll.roll).toFixed(1);
+      speedSpan.innerHTML = that.speed.toFixed(1);
+    });   
+    
   }
   curMessage = null;
   lastMessage = null;
@@ -349,27 +367,5 @@ translation: ""
   microControlList = [] as any
   leftWord = '左'
   rightWord = '右'
-  handleMessage(msgInfo: IDanMuMsgInfo) {
-      if (msgInfo.content.includes('上帝模式')) {
-        this.isGodView = true
-      } else if (msgInfo.content.includes('第一视角')) {
-        this.isGodView = false
-      } else if(msgInfo.content.includes(this.leftWord))  {
-        Object.keys(this.flag).forEach(key => {
-          this.flag[key] = false
-        })
-         this.flag[CONFIG.controlTextMap[this.leftWord]] = true
-      } else if (msgInfo.content.includes(this.rightWord)) {
-        Object.keys(this.flag).forEach(key => {
-          this.flag[key] = false
-        })
-         this.flag[CONFIG.controlTextMap[this.rightWord]] = true
-      } else {
-        Object.keys(this.flag).forEach(key => {
-          this.flag[key] = false
-        })
-      }
-      this.lastMessage = this.curMessage
-      this.curMessage = null
-  }
+  
 }

@@ -6,6 +6,7 @@ const COMMAND_ADD_MEMBER = 4
 const COMMAND_ADD_SUPER_CHAT = 5
 const COMMAND_DEL_SUPER_CHAT = 6
 const COMMAND_UPDATE_TRANSLATION = 7
+const RETRYCONNECTTIME = 5000
 
 // const CONTENT_TYPE_TEXT = 0
 const CONTENT_TYPE_EMOTICON = 1
@@ -49,10 +50,14 @@ export default class ChatClientRelay {
     }
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws'
     const url = `${protocol}://${window.location.host}/api/chat`
+    // const url = `ws://139.186.162.52/api/chat`
     this.websocket = new WebSocket(url)
     this.websocket.onopen = this.onWsOpen.bind(this)
     this.websocket.onclose = this.onWsClose.bind(this)
     this.websocket.onmessage = this.onWsMessage.bind(this)
+    this.websocket.addEventListener('error', function (event) {
+      console.log('WebSocket error: ', event);
+    });
   }
 
   onWsOpen() {
@@ -93,7 +98,8 @@ export default class ChatClientRelay {
     this.onWsClose()
   }
 
-  onWsClose() {
+  onWsClose(event) {
+    console.log("WebSocket is closed now.", event);
     this.websocket = null
     if (this.heartbeatTimerId) {
       window.clearInterval(this.heartbeatTimerId)
@@ -108,7 +114,7 @@ export default class ChatClientRelay {
       return
     }
     console.warn(`掉线重连中${++this.retryCount}`)
-    window.setTimeout(this.wsConnect.bind(this), 1000)
+    window.setTimeout(this.wsConnect.bind(this), RETRYCONNECTTIME)
   }
 
   onWsMessage(event) {

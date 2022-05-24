@@ -84,10 +84,10 @@ export function initCesium(callback: Function) {
     })
   
     const tengxunmap2 = viewer.imageryLayers.addImageryProvider(base2)
-    let base3 = new Cesium.UrlTemplateImageryProvider({
-      url:
-        'https://rtt2b.map.qq.com/rtt/?z={z}&x={x}&y={reverseY}&times=2&time=1631504424185'
-    })
+    // let base3 = new Cesium.UrlTemplateImageryProvider({
+    //   url:
+    //     'https://rtt2b.map.qq.com/rtt/?z={z}&x={x}&y={reverseY}&times=2&time=1631504424185'
+    // })
     // tengxunmap3 = viewer.imageryLayers.addImageryProvider(base3)
   // GS84
   // viewer.camera.setView({

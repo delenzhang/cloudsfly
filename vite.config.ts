@@ -6,6 +6,7 @@ export default defineConfig({
   base: './',
   server: {
     host: '0.0.0.0',
+    // cors: true,
     proxy: {
       // Proxying websockets or socket.i// 选项写法
       '/bfs/face': {
@@ -14,7 +15,10 @@ export default defineConfig({
         // rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/api/chat': {
-        target: 'ws://127.0.0.1:12450',
+        // ws://139.186.162.52/api/chat
+        //ws://127.0.0.1:12450 
+        target:  'ws://127.0.0.1:12450', 
+        changeOrigin: true, 
         ws: true
       }
     }
