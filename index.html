@@ -6,6 +6,16 @@
     <!-- <link rel="stylesheet" href="/lib/Cesium/widgets.css"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite App</title>
+    <script src="https://cdn-go.cn/aegis/aegis-sdk/latest/aegis.min.js"></script>
+    <script>
+      const aegis = new Aegis({
+        id: 'j4y5KIL21RKGwj9EaO', // 上报 id
+        uin: 'xxx', // 用户唯一 ID（可选）
+        reportApiSpeed: true, // 接口测速
+        reportAssetSpeed: true, // 静态资源测速
+        spa: true // spa 应用页面跳转的时候开启 pv 计算
+      });
+    </script>
     <style>
       * {
         margin: 0;
