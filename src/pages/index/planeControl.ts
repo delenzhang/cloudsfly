@@ -184,7 +184,11 @@ export default class PlaneControl {
       }
     }     
     document.addEventListener("keydown", function (e) {
+      console.log(e.keyCode, '<<<')
       switch (e.keyCode) {
+        case 86:
+          that.isGodView = !that.isGodView;
+          break
         case 40:
           if (e.shiftKey) {
             // speed down
