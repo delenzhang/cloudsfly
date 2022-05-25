@@ -22,15 +22,23 @@ function App() {
       <div id="toolbar">
       <table className="infoPanel">
         <tbody>
-          <tr>
+         
+          {
+            hideControl ?  <tr>
+            <td>
+               真实世界地图模拟飞行游戏，弹幕控制游戏，输入以下弹幕控制飞机
+            </td>
+          </tr> :  
+            <>
+             <tr>
             <td>
               (点击窗口使用键盘改变操作设置)
             </td>
           </tr>
-          {
-            hideControl ? null :  <tr>
+          <tr>
             <td>v （切换第一视角/上帝模式）</td>
           </tr>
+            </>
           }
           <tr>
             <td>上下: <span id="heading"></span>°</td>
@@ -67,7 +75,19 @@ function App() {
            <td>加速（↑ + ⇧）/ 减速（↓ + ⇧）</td>
          </tr>
           }
-          
+            {
+              hideControl ? <>
+              <tr>
+                <td>弹幕输入【上帝模式/第一视角】切换视图</td>
+              </tr>
+              <tr>
+                <td>弹幕输入【上/下/左/右/左旋/右旋】控制飞机，可使用【上10: 表示向上调整10次，下15：向下调整10次】</td>
+              </tr>
+              <tr>
+                <td>弹幕输入【加速/减速】控制飞机航行速度</td>
+              </tr>
+              </>: null
+            }
         </tbody>
       </table>
     </div>
