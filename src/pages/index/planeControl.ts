@@ -4,8 +4,9 @@ import { IPlaceObj, IDanMuMsgInfo } from '../../types'
 // import { io } from 'socket.io-client'
 import ChatClientRelay from './ChatClientRelay'
 // const socket = io(`ws://${location.host}/api`);
-const MINSPEED = 50
-const MAXSPEED = 400
+const MINSPEED = 100
+const MAXSPEED = 1000
+const DeltaSPEED = 100
 export default class PlaneControl {
   viewer: any
   position: any
@@ -195,7 +196,6 @@ export default class PlaneControl {
             that.speed = Math.max(--that.speed, MINSPEED);
           } else {
             // pitch down
-            console.log(121212)
             pitchDown()
           }
           break;
@@ -237,14 +237,14 @@ export default class PlaneControl {
     const downText = '下'
 
     this.chatClient.onAddText = (msgInfo: IDanMuMsgInfo) => {
-        if (msgInfo.content.includes('上帝模式')) {
+        if (msgInfo.content.includes('上帝视角')) {
           this.isGodView = true
         } else if (msgInfo.content.includes('第一视角')) {
           this.isGodView = false
         } else if(msgInfo.content.includes("加速"))  {
-          that.speed = Math.min(that.speed+10, MAXSPEED);
+          that.speed = Math.min(that.speed+DeltaSPEED, MAXSPEED);
         } else if(msgInfo.content.includes("减速"))  {
-          that.speed = Math.max(that.speed - 10, MINSPEED);
+          that.speed = Math.max(that.speed - DeltaSPEED, MINSPEED);
         } 
         else if(msgInfo.content.includes(leftRollText))  {
           this.handleContent(msgInfo.content, leftRollText, () => {
@@ -332,7 +332,7 @@ export default class PlaneControl {
                 // 指向  镜头随小车变化角度
                 heading: hpRoll.heading,
                 // 视角固定
-                pitch: hpRoll.pitch ,
+                pitch: hpRoll.pitch + Cesium.Math.toRadians(-30.0),
                 roll: hpRoll.roll
               }
             });
